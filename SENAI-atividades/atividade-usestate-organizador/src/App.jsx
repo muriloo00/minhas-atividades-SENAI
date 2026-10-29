@@ -1,122 +1,167 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import "./App.css";
+
+const filtros = [
+  { valor: "todas", rotulo: "Todas" },
+  { valor: "pendentes", rotulo: "Pendentes" },
+  { valor: "concluidas", rotulo: "Concluídas" },
+];
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [tarefas, setTarefas] = useState([]);
+  const [texto, setTexto] = useState("");
+  const [filtroAtivo, setFiltroAtivo] = useState("todas");
+
+  const total = tarefas.length;
+  const concluidas = tarefas.filter((tarefa) => tarefa.concluida).length;
+  const pendentes = total - concluidas;
+  const tarefasVisiveis = tarefas.filter((tarefa) => {
+    if (filtroAtivo === "pendentes") {
+      return !tarefa.concluida;
+    }
+
+    if (filtroAtivo === "concluidas") {
+      return tarefa.concluida;
+    }
+
+    return true;
+  });
+
+  function adicionarTarefa(evento) {
+    evento.preventDefault();
+
+    const textoLimpo = texto.trim();
+    if (!textoLimpo) {
+      return;
+    }
+
+    setTarefas((anteriores) => [
+      ...anteriores,
+      {
+        id: `${Date.now()}-${anteriores.length}`,
+        texto: textoLimpo,
+        concluida: false,
+      },
+    ]);
+    setTexto("");
+  }
+
+  function alternarConclusao(id) {
+    setTarefas((anteriores) =>
+      anteriores.map((tarefa) =>
+        tarefa.id === id
+          ? { ...tarefa, concluida: !tarefa.concluida }
+          : tarefa,
+      ),
+    );
+  }
+
+  function removerTarefa(id) {
+    setTarefas((anteriores) =>
+      anteriores.filter((tarefa) => tarefa.id !== id),
+    );
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <main className="task-app">
+      <header className="task-header">
+        <span className="task-eyebrow">Organize seu dia</span>
+        <h1>Minhas tarefas</h1>
+        <p>Adicione tarefas, acompanhe seu progresso e mantenha o foco.</p>
+      </header>
 
-      <div className="ticks"></div>
+      <section className="task-panel" aria-label="Organizador de tarefas">
+        <form className="task-form" onSubmit={adicionarTarefa}>
+          <label className="visually-hidden" htmlFor="nova-tarefa">
+            Nova tarefa
+          </label>
+          <input
+            id="nova-tarefa"
+            className="task-input"
+            value={texto}
+            onChange={(evento) => setTexto(evento.target.value)}
+            placeholder="O que você precisa fazer?"
+            autoComplete="off"
+          />
+          <button className="add-button" type="submit" disabled={!texto.trim()}>
+            Adicionar
+          </button>
+        </form>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
+        <div className="task-summary" aria-live="polite">
+          <div className="summary-item">
+            <span className="summary-number">{total}</span>
+            <span className="summary-label">Total</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-number">{pendentes}</span>
+            <span className="summary-label">Pendentes</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-number">{concluidas}</span>
+            <span className="summary-label">Concluídas</span>
+          </div>
+        </div>
+
+        <div className="task-toolbar">
+          <h2>Lista de tarefas</h2>
+          <div className="filter-list" aria-label="Filtrar tarefas">
+            {filtros.map((filtro) => (
+              <button
+                className={`filter-button${filtroAtivo === filtro.valor ? " is-active" : ""}`}
+                key={filtro.valor}
+                type="button"
+                aria-pressed={filtroAtivo === filtro.valor}
+                onClick={() => setFiltroAtivo(filtro.valor)}
+              >
+                {filtro.rotulo}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {tarefasVisiveis.length === 0 ? (
+          <div className="empty-state" role="status">
+            <span className="empty-icon" aria-hidden="true">
+              ✓
+            </span>
+            <p>
+              {total === 0
+                ? "Sua lista está vazia. Adicione uma tarefa para começar."
+                : "Nenhuma tarefa neste filtro."}
+            </p>
+          </div>
+        ) : (
+          <ul className="task-list">
+            {tarefasVisiveis.map((tarefa) => (
+              <li
+                className={`task-item${tarefa.concluida ? " is-complete" : ""}`}
+                key={tarefa.id}
+              >
+                <label className="task-label">
+                  <input
+                    className="task-checkbox"
+                    type="checkbox"
+                    checked={tarefa.concluida}
+                    onChange={() => alternarConclusao(tarefa.id)}
+                  />
+                  <span>{tarefa.texto}</span>
+                </label>
+                <button
+                  className="remove-button"
+                  type="button"
+                  aria-label={`Remover tarefa: ${tarefa.texto}`}
+                  onClick={() => removerTarefa(tarefa.id)}
+                >
+                  Remover
+                </button>
+              </li>
+            ))}
           </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
+        )}
       </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+    </main>
+  );
 }
 
-export default App
+export default App;
