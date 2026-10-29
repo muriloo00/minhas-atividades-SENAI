@@ -1,0 +1,22 @@
+.projetos-page {
+  width: 100%;
+  padding: 40px 32px;
+  box-sizing: border-box;
+}
+
+.projetos-page h1 {
+  margin: 0 0 28px;
+  text-align: left;
+}
+
+.projetos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr));
+  gap: 20px;
+}
+
+@media (max-width: 600px) {
+  .projetos-page {
+    padding: 28px 16px;
+  }
+}
